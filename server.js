@@ -57,6 +57,6 @@ require('./app/routes/order.routes.js')(app);
 require('./app/routes/favor.routes.js')(app);
 
 // listen for requests
-app.listen(5000, () => {
+app.listen(process.env.PORT || 3000, () => {
     console.log("Server is listening on port 8080");
 });
