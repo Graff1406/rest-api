@@ -2,17 +2,17 @@ module.exports = (app) => {
   const locations = require('../controllers/locations.controller.js');
 
   // Create a new Location
-  app.post('/locations', locations.create);
+  app.post('/api/locations', locations.create);
 
   // Retrieve all Location
-  app.get('/locations', locations.findAll);
+  app.get('/api/locations', locations.findAll);
 
   // Retrieve a single Location with locationId
-  app.get('/locations/:locationId', locations.findOne);
+  app.get('/api/locations/:locationId', locations.findOne);
 
   // Update a Note with locationId
-  app.put('/locations/:locationId', locations.update);
+  app.put('/api/locations/:locationId', locations.update);
 
   // Delete a Note with locationId
-  app.delete('/locations/:locationId', locations.delete);
+  app.delete('/api/locations/:locationId', locations.delete);
 }
