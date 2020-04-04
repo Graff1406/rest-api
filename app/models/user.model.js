@@ -11,14 +11,20 @@ const dbProf = {
   country: String,
   city: String,
   address: String,
-  avatar: Array,
-  tel: Array,
-  idDocs: Array,
+  drivingExperience: mongoose.Schema.Types.Mixed,
   excursionExperience: Number,
+  avatar: [
+    { src: String }
+  ],
+  idDocs: [
+    { src: String }
+  ],
+  tel: [
+    { code: [Number, String], number: [Number, String] }
+  ],
   lang: [
     { code: String, label: String }
   ],
-  drivingExperience: mongoose.Schema.Types.Mixed,
   car: {
     bodystyle: String,
     brand: String,
