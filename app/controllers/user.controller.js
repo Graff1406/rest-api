@@ -1,6 +1,132 @@
 const User = require('../models/user.model.js');
 const City = require('../models/city.model.js');
 const Word = require('../models/search.model.js');
+const nodemailer = require('../nodemailer/index');
+
+exports.login = async (req, res) => {
+    console.log("LOG: exports.login -> req.body.email", req.body.email)
+
+    try {
+        const clientEmail = await User.findOne({email: req.body.email})
+        if(!clientEmail) return res.send({noExistEmail: true})
+
+        const client = await User.findOne({...req.body}, {psw:0})
+        if(!client) return res.send({noCorrectPsw: true})
+
+        req.session.clientId = client._id
+
+        res.send({
+            client,
+            token: req.session.id
+        })
+    } catch (err) {
+        if(err.kind === 'ObjectId' || err.name === 'NotFound') {
+            return res.status(404).send({
+                message: "User not found with id " + req.body.email
+            });                
+        }
+        return res.status(500).send({
+            message: "Could not delete User with id " + req.body.email
+        });
+    }
+};
+
+// logged a user with the specified userId in the request
+exports.logged = async (req, res) => {
+    
+            console.log("LOG: exports.logged -> req.session.id", req.session.id)
+            console.log("LOG: exports.logged -> req.body.token", req.body.token)
+    try {
+        if(req.body.token === req.session.id) {
+            const client = await User.findOne(
+                {_id: req.session.clientId}, {psw:0}
+            )
+    
+            res.send(client)
+        } else res.send({})
+        
+    } catch (err) {
+        if(err.kind === 'ObjectId' || err.name === 'NotFound') {
+            return res.status(404).send({
+                message: "User not found with id " + req.body.email
+            });                
+        }
+        return res.status(500).send({
+            message: "Could not delete User with id " + req.body.email
+        });
+    }
+};
+
+// Join and Save a new User
+exports.join = async (req, res) => {
+
+    const emailIsExist = await User.findOne({email: req.body.email})
+    if (emailIsExist) {
+        res.send({emailIsExist: true})
+        return
+    }
+    // Create a User
+    const user = new User({
+        created: Date.now(),
+        confirmCode: Math.random().toString().substr(-5),
+        status: 'inactive',
+        country: 'Georgia',
+        name: req.body.name,
+        surName: req.body.surName,
+        email: req.body.email,
+        psw: req.body.psw,
+        city: req.body.city,
+        tel: req.body.tel,
+    });
+
+    try {
+        const data = await user.save()
+        req.body.msg.template.code = data.confirmCode
+        console.log("LOG: exports.join -> req.body.msg", req.body.msg)
+        nodemailer.send(req.body.msg)
+        res.send({ confirmCode: data.confirmCode, id: data.id });
+    } catch(err) {
+        res.status(500).send({
+            message: err.message || "Some error occurred while creating the User."
+        });
+    }
+};
+
+// Recovery psw
+exports.recoveryPsw = async (req, res) => {
+    console.log("LOG: exports.recoveryPsw -> req", req.body)
+    // Validate Request
+    if(!req.body) {
+        return res.status(400).send({
+            message: "User content can not be empty"
+        });
+    }
+
+    // Find user and update it with the request body
+    try {
+        const user = await User.update(
+            { email: req.body.email }, 
+            { psw: req.body.psw }
+        )
+        if(!user) {
+            return res.status(404).send({
+                message: "User not found with id " + req.params.id
+            });
+        }
+        req.body.msg.template.psw = req.body.psw
+        nodemailer.send(req.body.msg)
+        res.send(user);
+    } catch(err) {
+        if(err.kind === 'ObjectId') {
+            return res.status(404).send({
+                message: "User not found with id " + req.params.id
+            });                
+        }
+        return res.status(500).send({
+            message: "Error updating user with id " + req.params.id
+        });
+    }
+}
 
 // Create and Save a new User
 exports.create = (req, res) => {
@@ -11,6 +137,7 @@ exports.create = (req, res) => {
             name: req.body.name,
             surName: req.body.surName,
             email: req.body.email,
+            psw: req.body.psw,
             country: req.body.country,
             city: req.body.city,
             address: req.body.address,
@@ -185,27 +312,32 @@ exports.findOne = (req, res) => {
 };
 
 // Update a user identified by the usereId in the request
-exports.update = (req, res) => {
+exports.update = async (req, res) => {
+
     // Validate Request
-    if(!req.body.content) {
+    if(!req.body) {
         return res.status(400).send({
             message: "User content can not be empty"
         });
     }
 
     // Find user and update it with the request body
-    User.findByIdAndUpdate(req.params.id, {
-        title: req.body.title || "Untitled user",
-        content: req.body.content
-    }, {new: true})
-    .then(user => {
+    try {
+        console.log("LOG: exports.update -> req.body", req.body)
+
+        const user = await User.findByIdAndUpdate(req.params.id, req.body, {new: true})
+        console.log("LOG: exports.update -> req.body", req.body.email)
         if(!user) {
             return res.status(404).send({
                 message: "User not found with id " + req.params.id
             });
         }
-        res.send(user);
-    }).catch(err => {
+        req.session.clientId = user._id
+        res.send({
+            client: req.body,
+            token: req.session.id
+        })
+    } catch(err) {
         if(err.kind === 'ObjectId') {
             return res.status(404).send({
                 message: "User not found with id " + req.params.id
@@ -214,7 +346,7 @@ exports.update = (req, res) => {
         return res.status(500).send({
             message: "Error updating user with id " + req.params.id
         });
-    });
+    }
 };
 
 // Delete a user with the specified userId in the request

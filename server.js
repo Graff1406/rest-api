@@ -11,7 +11,8 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json({limit: '50mb', extended: true}))
 
 app.use(cors({
-    origin:['https://go-geo.herokuapp.com'],
+    // origin:['https://go-geo.herokuapp.com'],
+    origin:['http://localhost:3000'],
     methods:['GET','POST','PUT','DELETE'],
     credentials: true // enable set cookie
 }))
@@ -23,7 +24,7 @@ app.use(session({
     saveUninitialized: true
 }))
 
-app.put('/client/:id', function(req, res, next) {
+app.put('/api/client/:id', function(req, res, next) {
     res.header("Access-Control-Allow-Headers", "X-Requested-With");
     next();
 });
@@ -57,6 +58,9 @@ require('./app/routes/order.routes.js')(app);
 require('./app/routes/favor.routes.js')(app);
 
 // listen for requests
-app.listen(process.env.PORT || 3000, () => {
+// app.listen(process.env.PORT || 3000, () => {
+//     console.log("Server is listening on port -", process.env.PORT);
+// });
+app.listen(8080, () => {
     console.log("Server is listening on port 8080");
 });

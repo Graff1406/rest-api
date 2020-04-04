@@ -95,7 +95,7 @@ exports.create = async (req, res) => {
             const client = await clientModel.save()
             req.body.msg.template.code = client.confirmCode
             nodemailer.send(req.body.msg)
-            res.send({ confirmCode: client.confirmCode });
+            res.send({ confirmCode: client.confirmCode })
         }
     } catch (err) {
         res.status(500).send({

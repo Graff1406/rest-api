@@ -3,9 +3,11 @@ const mongoose = require('mongoose');
 const dbProf = {
   created: Number,
   status: String,
+  confirmCode: Number,
   name: String,
   surName: String,
   email: String,
+  psw: String,
   country: String,
   city: String,
   address: String,
@@ -74,8 +76,8 @@ const dbProf = {
       name: String,
       title: String,
       text: String,
-      createdDate: Date,
-      touchedDate: Date
+      createdDate: Number,
+      touchedDate: Number
     }
   ]
 }
