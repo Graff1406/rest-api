@@ -1,20 +1,26 @@
 const mongoose = require('mongoose');
 
 const dbOrder = {
-  status: String,
   gudeId: String,
   serviceId: String,
   clientId: String,
+  status: String,
   created: Number,
-  booked: Number,
-  paid: String,
-  sum: mongoose.Schema.Types.Mixed,
+  start: Number,
+  rejectionReason: String,
+  title: Object,
+  languages: [
+    { code: String, label: String }
+  ],
   messages: [
     {
-      name: String,
-      text: String,
-      createdDate: Number, // will be set milliseconds of date
-      touchedDate: Number // will be set milliseconds of date
+      author: mongoose.Schema.Types.Mixed,
+      contents: String,
+      touched: Boolean,
+      date: {
+        day: String,
+        time: String,
+      }
     }
   ]
 }

@@ -20,7 +20,7 @@ const dbProf = {
     { src: String }
   ],
   tel: [
-    { code: [Number, String], number: [Number, String] }
+    { number: Number | String }
   ],
   lang: [
     { code: String, label: String }
@@ -29,27 +29,41 @@ const dbProf = {
     bodystyle: String,
     brand: String,
     seat: mongoose.Schema.Types.Mixed,
-    pics: Array
+    pics: [
+      { src: String }
+    ]
   },
   services: [
     {
       created: Number,
+      status: String,
       title: {
         ru: String,
         en: String
       },
       description: Object,
       rating: Number,
-      price: Number,
+      price: mongoose.Schema.Types.Mixed,
       locations: {
         ru: Array,
         en: Array
       },
-      orders: [{
-        gudeId: String,
-        serviceId: String,
-        clientId: String
-      }],
+      orders: Array,
+      // orders: [{
+      //   clientId: String,
+      //   status: String,
+      //   created: Number,
+      //   start: Number,
+      //   rejectionReason: String,
+      //   messages: [
+      //     {
+      //       name: String,
+      //       text: String,
+      //       createdDate: Number, // will be set milliseconds of date
+      //       touchedDate: Number // will be set milliseconds of date
+      //     }
+      //   ]
+      // }],
       comments: [
         {
           name: String,
@@ -65,10 +79,14 @@ const dbProf = {
         wifi: Boolean,
         additionSpending: String,
         payment: Boolean,
-        pause: Number,
-        lunchPause: Number
+        pause: mongoose.Schema.Types.Mixed,
+        lunchPause: mongoose.Schema.Types.Mixed
       },
-      calendar: Array
+      calendar: {
+        saturday: Boolean,
+        sunday: Boolean,
+        dates: Array
+      }
     }
   ],
   messangers: [

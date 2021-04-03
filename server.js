@@ -56,6 +56,7 @@ require('./app/routes/location.routes.js')(app);
 require('./app/routes/client.routes.js')(app);
 require('./app/routes/order.routes.js')(app);
 require('./app/routes/favor.routes.js')(app);
+require('./app/routes/langauges.routes.js')(app);
 
 // listen for requests
 // app.listen(process.env.PORT || 3000, () => {

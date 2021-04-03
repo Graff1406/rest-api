@@ -1,22 +1,56 @@
 const User = require('../models/user.model.js');
+const Client = require('../models/client.model.js');
 const City = require('../models/city.model.js');
 const Word = require('../models/search.model.js');
+const Orders = require('../models/order.model.js');
 const nodemailer = require('../nodemailer/index');
 
+const buildGuide = async guide => {
+    // find orders of guide if there is exist for him
+    const orders = await Orders.find({gudeId: guide._id})
+
+    // marge orders to services of guide
+    // to extract client ids from orders and return
+    const clientIds = pushOrdersToService(guide.services, orders)
+
+    // get all data of clients for add to order
+    clients = await Client.find({_id: {$in:clientIds} })
+
+    // add name and country of client to suitable of order
+    clients.forEach(({name, country}) => pushOrdersToService(guide.services, orders, {name, country}))
+    
+    function pushOrdersToService(services, orders, client) {
+        const clientIds = []
+        for (const orderItem of orders) {
+            const order = JSON.parse(JSON.stringify(orderItem))
+            clientIds.push(order.clientId)
+            for (const service of services) {
+                // order.serviceId type is string
+                // service._id type is object
+                if (order.serviceId == service._id && client)
+                    service.orders.push({...order, ...client})
+            }
+        }
+        return clientIds
+    }
+    return guide
+}
+
 exports.login = async (req, res) => {
-    console.log("LOG: exports.login -> req.body.email", req.body.email)
-
     try {
-        const clientEmail = await User.findOne({email: req.body.email})
-        if(!clientEmail) return res.send({noExistEmail: true})
+        // ckeck if email is exist
+        const guideEmail = await User.findOne({email: req.body.email})
+        if(!guideEmail) return res.send({noExistEmail: true})
 
-        const client = await User.findOne({...req.body}, {psw:0})
-        if(!client) return res.send({noCorrectPsw: true})
+        // if email is exist then open access
+        const guide = await User.findOne({...req.body}, {psw:0})
+        if(!guide) return res.send({noCorrectPsw: true})
 
-        req.session.clientId = client._id
+        const newGuide = await buildGuide(JSON.parse(JSON.stringify(guide)))
 
-        res.send({
-            client,
+        req.session.clientId = guide._id
+        res.status(200).send({
+            guide: newGuide,
             token: req.session.id
         })
     } catch (err) {
@@ -33,24 +67,22 @@ exports.login = async (req, res) => {
 
 // logged a user with the specified userId in the request
 exports.logged = async (req, res) => {
-    
-            console.log("LOG: exports.logged -> req.session.id", req.session.id)
-            console.log("LOG: exports.logged -> req.body.token", req.body.token)
+    console.log('rq', req.body)
+    console.log('session', req.session.clientId)
     try {
         if(req.body.token === req.session.id) {
-            const client = await User.findOne(
+            const guide = await User.findOne(
                 {_id: req.session.clientId}, {psw:0}
             )
-    
-            res.send(client)
-        } else res.send({})
+            const newGuide = await buildGuide(JSON.parse(JSON.stringify(guide)))
+            res.status(200).send(newGuide)
+        } else {
+            res.status(404).send({
+                message: `User not found with id ${req.session.clientId}`
+            })
+        }
         
     } catch (err) {
-        if(err.kind === 'ObjectId' || err.name === 'NotFound') {
-            return res.status(404).send({
-                message: "User not found with id " + req.body.email
-            });                
-        }
         return res.status(500).send({
             message: "Could not delete User with id " + req.body.email
         });
@@ -146,6 +178,7 @@ exports.create = (req, res) => {
             idDocs: req.body.idDocs,
             excursionExperience: req.body.excursionExperience,
             drivingExperience: req.body.drivingExperience,
+            lang: req.body.lang,
             car: { ...req.body.car },
             services: ( () => req.body.services.map(item => item) )(),
             messangers: ( () => req.body.messangers.map(item => item) )(),

@@ -8,10 +8,18 @@ exports.send = (datas) => {
   const { subject, text, template } = datas
   let html = ''
 
-  if (template.type === 'create')
-    html = htmlCreate.template(subject, text, template)
-  else if (template.type === 'recovery')
-    html = htmlRecovery.template(subject, text, template)
+  switch(template.type) {
+    case 'create':
+      html = htmlCreate.template(subject, text, template)
+      break
+    case 'recovery':
+      html = htmlRecovery.template(subject, text, template)
+      break
+    case 'refused':
+      html = htmlRefused.template(subject, text, template)
+      break
+
+  }
 
   // async..await is not allowed in global scope, must use a wrapper
   async function main() {
